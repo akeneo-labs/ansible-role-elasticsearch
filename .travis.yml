@@ -5,15 +5,35 @@ env:
   - distro: centos7
     init: /usr/lib/systemd/systemd
     run_opts: "--privileged --volume=/sys/fs/cgroup:/sys/fs/cgroup:ro"
+    elasticsearch_version: 1.7
+  - distro: centos7
+    init: /usr/lib/systemd/systemd
+    run_opts: "--privileged --volume=/sys/fs/cgroup:/sys/fs/cgroup:ro"
+    elasticsearch_version: 2.x
   - distro: ubuntu1604
     init: /lib/systemd/systemd
     run_opts: "--privileged --volume=/sys/fs/cgroup:/sys/fs/cgroup:ro"
+    elasticsearch_version: 1.7
+  - distro: ubuntu1604
+    init: /lib/systemd/systemd
+    run_opts: "--privileged --volume=/sys/fs/cgroup:/sys/fs/cgroup:ro"
+    elasticsearch_version: 2.x
   - distro: ubuntu1404
     init: /sbin/init
     run_opts: ""
+    elasticsearch_version: 1.7
+  - distro: ubuntu1404
+    init: /sbin/init
+    run_opts: ""
+    elasticsearch_version: 2.x
   - distro: ubuntu1204
     init: /sbin/init
     run_opts: ""
+    elasticsearch_version: 1.7
+  - distro: ubuntu1204
+    init: /sbin/init
+    run_opts: ""
+    elasticsearch_version: 2.x
 
 before_install:
   # Pull container.
@@ -31,11 +51,11 @@ script:
   - 'docker exec --tty "$(cat ${container_id})" env TERM=xterm ansible-playbook /etc/ansible/roles/role_under_test/tests/test.yml --syntax-check'
 
   # Test role.
-  - 'docker exec --tty "$(cat ${container_id})" env TERM=xterm ansible-playbook /etc/ansible/roles/role_under_test/tests/test.yml'
+  - 'docker exec --tty "$(cat ${container_id})" env TERM=xterm ansible-playbook /etc/ansible/roles/role_under_test/tests/test.yml -e elasticsearch_version=${elastic_version}'
 
   # Test role idempotence.
   - idempotence=$(mktemp)
-  - docker exec "$(cat ${container_id})" ansible-playbook /etc/ansible/roles/role_under_test/tests/test.yml | tee -a ${idempotence}
+  - docker exec "$(cat ${container_id})" ansible-playbook /etc/ansible/roles/role_under_test/tests/test.yml -e elasticsearch_version=${elastic_version} | tee -a ${idempotence}
   - >
     tail ${idempotence}
     | grep -q 'changed=0.*failed=0'
